@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CCTNS Exam Portal — UP Police Login</title>
+    <title>CCTNS Exam Portal — UP Police</title>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,6 +13,8 @@
     <!-- SweetAlert CSS & JS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.js"></script>
+    <!-- SheetJS Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
         * {
@@ -34,22 +36,11 @@
             padding: 20px;
         }
 
-        .login-grid {
-            position: fixed;
-            inset: 0;
-            background-image: 
-                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-            background-size: 32px 32px;
-            pointer-events: none;
-            z-index: 0;
-        }
-
         .main-container {
             position: relative;
             z-index: 1;
             width: 100%;
-            max-width: 440px;
+            max-width: 1100px;
             margin: 0 auto;
         }
 
@@ -63,17 +54,6 @@
                         0 0 30px rgba(127, 231, 222, 0.05);
         }
 
-        .login-emblem {
-            margin: 0 auto 12px auto;
-            display: block;
-            text-align: center;
-        }
-
-        .header-box {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
         .eyebrow-text {
             color: #c9962f;
             font-family: 'Rajdhani', sans-serif;
@@ -83,75 +63,46 @@
             text-transform: uppercase;
         }
 
-        .title-text {
-            color: #ffffff;
-            font-size: 1.75rem;
-            font-weight: 700;
-            margin: 4px 0;
+        .exam-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
         }
 
-        .sub-text {
-            color: #94a3b8;
-            font-size: 0.9rem;
+        @media (min-width: 900px) {
+            .exam-grid {
+                grid-template-columns: 2fr 1fr;
+            }
         }
 
-        .divider {
-            position: relative;
-            margin: 20px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            text-align: center;
-        }
-
-        .divider span {
-            position: relative;
-            top: 10px;
-            background: #132038;
-            padding: 0 12px;
-            color: #7fe7de;
-            font-size: 0.82rem;
-            white-space: nowrap;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            margin-top: 24px;
-        }
-
-        .pw-input {
-            width: 100%;
+        .option-item {
+            background: rgba(11, 21, 38, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
             padding: 12px 16px;
-            background: rgba(11, 21, 38, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 8px;
-            color: #ffffff;
-            font-size: 0.95rem;
-            outline: none;
-            transition: all 0.2s ease;
-        }
-
-        .pw-input:focus {
-            border-color: #7fe7de;
-            box-shadow: 0 0 0 3px rgba(127, 231, 222, 0.15);
-        }
-
-        .pw-wrap {
-            position: relative;
-            width: 100%;
-        }
-
-        .pw-eye {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: #94a3b8;
+            margin-bottom: 10px;
             cursor: pointer;
-            font-size: 1.1rem;
-            padding: 4px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+        }
+
+        .option-item:hover {
+            border-color: #7fe7de;
+            background: rgba(127, 231, 222, 0.05);
+        }
+
+        .question-palette-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            max-height: 320px;
+            overflow-y: auto;
+            padding: 10px;
+            background: rgba(11, 21, 38, 0.8);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .btn-gold {
@@ -171,188 +122,423 @@
             gap: 8px;
         }
 
-        .btn-gold:hover {
-            background: linear-gradient(135deg, #d8a53e, #ab7d20);
-            box-shadow: 0 4px 15px rgba(201, 150, 47, 0.3);
+        .btn-slate {
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .certificate-box {
+            border: 4px double #c9962f;
+            padding: 30px;
+            border-radius: 16px;
+            background: rgba(11, 21, 38, 0.95);
+            text-align: center;
+            margin: 20px 0;
+            box-shadow: 0 0 20px rgba(201, 150, 47, 0.2);
+        }
+
+        .cert-actions-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .hidden { display: none !important; }
+
+        @media print {
+            body { 
+                background: white !important; 
+                color: black !important; 
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .no-print { 
+                display: none !important; 
+            }
+            #resultScreen, #resultScreen * { 
+                visibility: visible !important; 
+            }
+            #resultScreen {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: white !important;
+                color: black !important;
+                box-shadow: none !important;
+            }
+            .certificate-box {
+                border: 4px double #000 !important;
+                background: white !important;
+                color: black !important;
+                margin: 0 auto !important;
+                margin-top: 0 !important;
+                box-shadow: none !important;
+            }
+            .certificate-box h1, .certificate-box h3 { 
+                color: black !important; 
+            }
+            @page {
+                size: A4 portrait;
+                margin: 5mm;
+            }
         }
     </style>
 </head>
 <body>
 
-    <div class="login-grid" aria-hidden="true"></div>
-
     <div class="main-container">
-        <div id="loginScreen" class="police-card">
-            <div class="login-emblem">
-                <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true">
-                    <defs>
-                        <linearGradient id="lg1" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0" stop-color="#1c2f4e"></stop>
-                            <stop offset="1" stop-color="#0b1526"></stop>
-                        </linearGradient>
-                    </defs>
-                    <path d="M32 4 8 13v17c0 14 10.5 24.5 24 30 13.5-5.5 24-16 24-30V13L32 4Z" fill="url(#lg1)" stroke="#c9962f" stroke-width="2.4"></path>
-                    <path d="M32 11 14 18v12c0 10.5 7.6 18.6 18 23 10.4-4.4 18-12.5 18-23V18L32 11Z" fill="none" stroke="rgba(201,150,47,.45)" stroke-width="1"></path>
-                    <circle cx="32" cy="29" r="9" fill="none" stroke="#7fe7de" stroke-width="2"></circle>
-                    <path d="M32 20v-4M32 42v-4M23 29h-4M45 29h-4" stroke="#7fe7de" stroke-width="2" stroke-linecap="round"></path>
-                    <circle cx="32" cy="29" r="3" fill="#7fe7de"></circle>
-                </svg>
-            </div>
 
-            <div class="header-box">
-                <div class="eyebrow-text">UTTAR PRADESH POLICE</div>
-                <h1 class="title-text">CCTNS Exam Portal</h1>
-                <div class="sub-text">Police Commissionerate Lucknow</div>
-            </div>
-
-            <div class="divider">
-                <span>Online Assessment Login</span>
-            </div>
-
-            <form id="loginForm" class="form-group" onsubmit="event.preventDefault(); handleLogin();">
+        <!-- 1. परीक्षा स्क्रीन -->
+        <div id="examScreen" class="exam-grid">
+            <!-- बाईं ओर: प्रश्न -->
+            <div class="police-card" style="display: flex; flex-direction: column; justify-content: space-between;">
                 <div>
-                    <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 6px;">यूजर नेम (User Name)</label>
-                    <input type="text" id="userIdInput" class="pw-input" placeholder="उदा. EMP101" required>
-                </div>
+                    <!-- हेडर जिसमें यूजर का नाम, आईडी व यूनिट दिखेगी -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 16px;">
+                        <div>
+                            <h4 id="profileName" style="color: #ffffff; font-size: 1rem; font-weight: 600;">नाम: -</h4>
+                            <p id="profileMeta" style="color: #94a3b8; font-size: 0.8rem;">आईडी: - | यूनिट: -</p>
+                        </div>
+                        <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; padding: 6px 12px; border-radius: 20px; font-weight: 700; font-size: 0.85rem;">
+                            <i class="fa-regular fa-clock"></i> <span id="hours">00</span>:<span id="minutes">59</span>:<span id="seconds">59</span>
+                        </div>
+                    </div>
 
-                <div>
-                    <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 6px;">पासवर्ड (Password)</label>
-                    <div class="pw-wrap">
-                        <input type="password" id="userPassInput" class="pw-input" placeholder="पासवर्ड दर्ज करें" required>
-                        <button type="button" class="pw-eye" onclick="togglePasswordVisibility('userPassInput')">👁</button>
+                    <!-- प्रश्न पाठ -->
+                    <div id="questionText" style="font-size: 1.1rem; font-weight: 600; color: #ffffff; margin-bottom: 20px; line-height: 1.5;">प्रश्न लोड हो रहे हैं...</div>
+
+                    <!-- विकल्प लिस्ट -->
+                    <div id="optionsContainer">
+                        <div onclick="selectOption('A')" class="option-item">
+                            <input type="radio" name="secureAnswer" id="radioA" value="">
+                            <span id="textA" style="font-size: 0.95rem;"></span>
+                        </div>
+                        <div onclick="selectOption('B')" class="option-item">
+                            <input type="radio" name="secureAnswer" id="radioB" value="">
+                            <span id="textB" style="font-size: 0.95rem;"></span>
+                        </div>
+                        <div onclick="selectOption('C')" class="option-item">
+                            <input type="radio" name="secureAnswer" id="radioC" value="">
+                            <span id="textC" style="font-size: 0.95rem;"></span>
+                        </div>
+                        <div onclick="selectOption('D')" class="option-item">
+                            <input type="radio" name="secureAnswer" id="radioD" value="">
+                            <span id="textD" style="font-size: 0.95rem;"></span>
+                        </div>
                     </div>
                 </div>
 
-                <button type="submit" id="loginBtn" class="btn-gold" style="margin-top: 8px;">
-                    <i class="fa-solid fa-right-to-bracket"></i> Login
-                </button>
-            </form>
+                <!-- नेविगेशन Buttons -->
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 20px; padding-top: 12px;">
+                    <button id="previousButton" onclick="previousQuestion()" class="btn-slate"><i class="fa-solid fa-arrow-left"></i> पिछला</button>
+                    <button onclick="removeAnswer()" class="btn-slate" style="color: #f59e0b; border-color: rgba(245, 158, 11, 0.3);">उत्तर हटाएं</button>
+                    <button id="nextButton" onclick="nextQuestion()" class="btn-gold" style="width: auto;">अगला <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- दाहिनी ओर: पैलेट -->
+            <div class="police-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <h3 class="eyebrow-text" style="font-size: 0.85rem; margin-bottom: 12px; text-align: left;">प्रश्नों की स्थिति पैलेट</h3>
+                    <div id="questionGrid" class="question-palette-grid"></div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <button onclick="confirmFinishTest()" class="btn-gold" style="background: linear-gradient(135deg, #dc2626, #991b1b);">
+                        <i class="fa-solid fa-flag-checkered"></i> परीक्षा समाप्त करें
+                    </button>
+                </div>
+            </div>
         </div>
+
+        <!-- 2. रिजल्ट व सर्टिफिकेट स्क्रीन -->
+        <div id="resultScreen" class="hidden police-card" style="max-width: 650px; margin: 0 auto; text-align: center;">
+            <div class="certificate-box">
+                <div class="eyebrow-text">UTTAR PRADESH POLICE</div>
+                <h1 style="color: #c9962f; font-family: 'Rajdhani', sans-serif; font-size: 1.8rem; margin: 8px 0;">CERTIFICATE OF COMPLETION</h1>
+                <p style="color: #94a3b8; font-size: 0.85rem;">यह प्रमाणित किया जाता है कि</p>
+                <h3 id="certUser" style="color: #ffffff; font-size: 1.5rem; margin: 10px 0; font-weight: 700;"></h3>
+                <p style="color: #e2e8f0; font-size: 0.9rem; margin-bottom: 16px;">ने सफलतापूर्वक CCTNS ऑनलाइन परीक्षा उत्तीर्ण की है।</p>
+                
+                <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 16px;">
+                    कुल प्रश्न: <span id="certTotal"></span> | सही उत्तर: <span id="certScore" style="color: #7fe7de;"></span> | प्रतिशत: <span id="certPercent" style="color: #c9962f;"></span>%
+                </div>
+
+                <div style="font-size: 0.75rem; color: #64748b; display: flex; justify-content: space-between;">
+                    <span>दिनांक: <span id="certDate"></span></span>
+                    <span>VERIFIED DIGITAL CERTIFICATE</span>
+                </div>
+            </div>
+
+            <div class="cert-actions-container no-print">
+                <button onclick="window.print()" class="btn-gold" style="width: auto;">
+                    <i class="fa-solid fa-print"></i> प्रिंट / PDF सेव करें
+                </button>
+                <button onclick="window.location.href='index.html'" class="btn-slate">लॉगिन पेज पर वापस जाएँ</button>
+            </div>
+        </div>
+
     </div>
 
+    <!-- JavaScript Logic -->
     <script>
         'use strict';
+        
+        let currentUserObj = null;
+        let questionsData = [];
+        let currentIndex = 0;
+        let userAnswers = {};
+        let totalSeconds = 3600;
+        let timerInterval = null;
 
-        // Google Apps Script URL
-        const GOOGLE_SHEET_USERS_API_URL = "https://script.google.com/macros/s/AKfycbyDzS3NqtINc16q-QlPfYiMtzUZn29QhD8KuuAZmLo5eRpDfas7x93B8rYHAJf-j7fs/exec"; 
+        const QUESTIONS_API_URL = "https://script.google.com/macros/s/AKfycbyDzS3NqtINc16q-QlPfYiMtzUZn29QhD8KuuAZmLo5eRpDfas7x93B8rYHAJf-j7fs/exec"; 
 
-        function togglePasswordVisibility(elementId) {
-            const passInput = document.getElementById(elementId);
-            passInput.type = passInput.type === 'password' ? 'text' : 'password';
+        async function initExamPortal() {
+            let savedUser = localStorage.getItem('active_exam_user');
+            if (!savedUser) {
+                window.location.href = "index.html";
+                return;
+            }
+
+            currentUserObj = JSON.parse(savedUser);
+            document.getElementById('profileName').textContent = currentUserObj.name + " (" + currentUserObj.rank + ")";
+            document.getElementById('profileMeta').textContent = "आईडी: " + currentUserObj.id + " | यूनिट: " + currentUserObj.unit;
+
+            await loadQuestionsFromSheet();
+            buildQuestionButtons();
+            if(questionsData.length > 0) {
+                renderQuestion(0);
+            }
+            timerInterval = setInterval(updateCountdown, 1000);
         }
 
-        // केवल गूगल शीट से Users डेटा फ़ेच करने का फ़ंक्शन
-        async function fetchUsersFromGoogleSheet() {
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                let j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        async function loadQuestionsFromSheet() {
             try {
-                let response = await fetch(GOOGLE_SHEET_USERS_API_URL, {
+                let response = await fetch(QUESTIONS_API_URL, {
                     method: "GET",
                     redirect: "follow"
                 });
 
-                if (!response.ok) throw new Error("डेटा फ़ेच करने में विफलता");
-                
+                if (!response.ok) throw new Error("प्रश्न फ़ेच करने में विफलता");
+
                 let data = await response.json();
-                let usersArray = data.users || (Array.isArray(data) ? data : []);
-                
-                let usersDb = {};
-                if (Array.isArray(usersArray)) {
-                    usersArray.forEach(row => {
-                        let uId = String(row.id || "").trim();
-                        if (uId) {
-                            usersDb[uId] = {
-                                id: uId,
-                                name: String(row.name || "अज्ञात").trim(),
-                                rank: String(row.rank || "कर्मचारी").trim(),
-                                unit: String(row.unit || "मुख्यालय").trim(),
-                                pass: String(row.pass || "").trim()
-                            };
-                        }
-                    });
-                }
-                return usersDb;
-            } catch (error) {
-                console.error("Google Sheet Fetch Error:", error);
-                return null;
-            }
-        }
+                let allQuestions = data.questions || (Array.isArray(data) ? data : []);
 
-        async function handleLogin() {
-            let uid = document.getElementById('userIdInput').value.trim();
-            let upass = document.getElementById('userPassInput').value.trim();
-            let btn = document.getElementById('loginBtn');
-
-            if (!uid || !upass) {
-                swal({
-                    title: "अधूरी जानकारी!",
-                    text: "कृपया यूजर नेम और पासवर्ड दोनों दर्ज करें।",
-                    type: "warning",
-                    confirmButtonColor: "#c9962f",
-                    confirmButtonText: "ठीक है"
-                });
-                return;
-            }
-
-            // लॉगिन बटन पर लोडिंग इंडिकेटर दिखाएं
-            btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> सत्यापन हो रहा है...`;
-
-            // 1. केवल गूगल शीट से लाइव यूजर डेटा फेच करें
-            let usersDb = await fetchUsersFromGoogleSheet();
-
-            btn.disabled = false;
-            btn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> Login`;
-
-            // यदि शीट से डेटा प्राप्त न हो सके (सर्वर एरर या इंटरनेट समस्या)
-            if (!usersDb) {
-                swal({
-                    title: "कनेक्शन त्रुटि!",
-                    text: "गूगल शीट से डेटा प्राप्त नहीं हो सका। कृपया अपना इंटरनेट कनेक्शन जांचें।",
-                    type: "error",
-                    confirmButtonColor: "#dc2626",
-                    confirmButtonText: "ठीक है"
-                });
-                return;
-            }
-
-            // 2. यूजर नेम और पासवर्ड का सत्यापन
-            if (usersDb[uid]) {
-                let userRecord = usersDb[uid];
-
-                if (userRecord.pass && String(userRecord.pass).trim() === upass) {
-                    // यूजर डेटा को localStorage में सेव करें
-                    localStorage.setItem('active_exam_user', JSON.stringify(userRecord));
-
-                    swal({
-                        title: "Successfully Login!",
-                        text: "सफलतापूर्वक लॉगिन हो गया है।",
-                        type: "success",
-                        timer: 1500,
-                        showConfirmButton: false
-                    });
-
-                    setTimeout(() => {
-                        window.location.href = "exam.html";
-                    }, 1500);
-
+                if (Array.isArray(allQuestions) && allQuestions.length > 0) {
+                    let clonedArray = JSON.parse(JSON.stringify(allQuestions));
+                    shuffleArray(clonedArray);
+                    
+                    // शीट से रैंडम 100 प्रश्न छाँटें (अगर 100 से कम हैं तो उपलब्ध सभी आ जाएंगे)
+                    let selectCount = Math.min(clonedArray.length, 100);
+                    questionsData = clonedArray.slice(0, selectCount).map((q, index) => ({
+                        DisplayNumber: index + 1,
+                        Question: q.Question || "",
+                        OptionA: q.OptionA || "",
+                        OptionB: q.OptionB || "",
+                        OptionC: q.OptionC || "",
+                        OptionD: q.OptionD || "",
+                        CorrectAnswer: q.CorrectAnswer || ""
+                    }));
                 } else {
-                    swal({
-                        title: "प्रवेश अस्वीकृत!",
-                        text: "गलत पासवर्ड! कृपया सही पासवर्ड दर्ज करें।",
-                        type: "error",
-                        confirmButtonColor: "#dc2626",
-                        confirmButtonText: "पुनः प्रयास करें"
-                    });
+                    throw new Error("शीट खाली है या प्रश्न नहीं मिले");
                 }
-            } else {
-                swal({
-                    title: "यूजर नहीं मिला!",
-                    text: "यह यूजर नेम गूगल शीट डेटाबेस में दर्ज नहीं है।",
-                    type: "error",
-                    confirmButtonColor: "#dc2626",
-                    confirmButtonText: "ठीक है"
-                });
+            } catch (error) {
+                console.error("Error loading questions:", error);
+                alert("गूगल शीट से प्रश्न लोड करने में त्रुटि हुई। कृपया कंसोल (F12) जांचें।");
+                questionsData = [
+                    { DisplayNumber: 1, Question: "कोर्ट ट्रायल विवरण हेतु कौन सा फॉर्म उपयोग किया जाता है?", OptionA: "IIF-2", OptionB: "IIF-3", OptionC: "IIF-6", OptionD: "उपरोक्त सभी", CorrectAnswer: "IIF-6" }
+                ];
             }
         }
+
+        function buildQuestionButtons() {
+            let grid = document.getElementById('questionGrid');
+            grid.innerHTML = '';
+            for (let i = 0; i < questionsData.length; i++) {
+                let btn = document.createElement('button');
+                btn.type = 'button';
+                btn.id = 'questionButton' + (i + 1);
+                btn.style.cssText = "padding: 8px; border-radius: 6px; font-weight: bold; font-size: 0.8rem; background: rgba(255,255,255,0.08); color: white; border: 1px solid rgba(255,255,255,0.1); cursor: pointer;";
+                btn.textContent = (i + 1);
+                btn.setAttribute('data-index', i);
+                btn.onclick = function() {
+                    jumpQuestion(parseInt(this.getAttribute('data-index'), 10));
+                };
+                grid.appendChild(btn);
+            }
+        }
+
+        function renderQuestion(index) {
+            currentIndex = index;
+            let q = questionsData[index];
+            
+            document.getElementById('questionText').textContent = 'प्रश्न ' + q.DisplayNumber + ': ' + q.Question;
+            
+            document.getElementById('textA').textContent = q.OptionA;
+            document.getElementById('textB').textContent = q.OptionB;
+            document.getElementById('textC').textContent = q.OptionC;
+            document.getElementById('textD').textContent = q.OptionD;
+
+            document.getElementById('radioA').value = q.OptionA;
+            document.getElementById('radioB').value = q.OptionB;
+            document.getElementById('radioC').value = q.OptionC;
+            document.getElementById('radioD').value = q.OptionD;
+
+            let radios = document.getElementsByName('secureAnswer');
+            let selectedValue = userAnswers[q.DisplayNumber] || null;
+            
+            for (let i = 0; i < radios.length; i++) {
+                radios[i].checked = (radios[i].value === selectedValue);
+            }
+
+            document.getElementById('previousButton').disabled = (index <= 0);
+            document.getElementById('nextButton').disabled = (index >= questionsData.length - 1);
+            updateGridStyles();
+        }
+
+        function selectOption(choiceKey) {
+            let q = questionsData[currentIndex];
+            let selectedText = "";
+            
+            if (choiceKey === 'A') selectedText = q.OptionA;
+            else if (choiceKey === 'B') selectedText = q.OptionB;
+            else if (choiceKey === 'C') selectedText = q.OptionC;
+            else if (choiceKey === 'D') selectedText = q.OptionD;
+
+            document.getElementById('radio' + choiceKey).checked = true;
+            userAnswers[q.DisplayNumber] = selectedText;
+            updateGridStyles();
+        }
+
+        function removeAnswer() {
+            let q = questionsData[currentIndex];
+            delete userAnswers[q.DisplayNumber];
+            
+            let radios = document.getElementsByName('secureAnswer');
+            for (let i = 0; i < radios.length; i++) radios[i].checked = false;
+            updateGridStyles();
+        }
+
+        function updateGridStyles() {
+            for (let i = 1; i <= questionsData.length; i++) {
+                let btn = document.getElementById('questionButton' + i);
+                if (btn) {
+                    let isAns = userAnswers[i] !== undefined;
+                    if (i === questionsData[currentIndex].DisplayNumber) {
+                        btn.style.background = "#c9962f";
+                        btn.style.color = "#000";
+                        btn.style.borderColor = "#7fe7de";
+                    } else if (isAns) {
+                        btn.style.background = "#10b981";
+                        btn.style.color = "#fff";
+                        btn.style.borderColor = "#059669";
+                    } else {
+                        btn.style.background = "rgba(255,255,255,0.08)";
+                        btn.style.color = "#fff";
+                        btn.style.borderColor = "rgba(255,255,255,0.1)";
+                    }
+                }
+            }
+        }
+
+        function previousQuestion() {
+            if (currentIndex > 0) renderQuestion(currentIndex - 1);
+        }
+
+        function nextQuestion() {
+            if (currentIndex < questionsData.length - 1) renderQuestion(currentIndex + 1);
+        }
+
+        function jumpQuestion(index) {
+            renderQuestion(index);
+        }
+
+        function confirmFinishTest() {
+            swal({
+                title: 'परीक्षा समाप्त करें?',
+                text: 'क्या आप वाकई अपने उत्तर जमा करना चाहते हैं?',
+                type: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'हाँ, सबमिट करें',
+                cancelButtonText: 'जारी रखें'
+            }, function(confirmed) {
+                if (confirmed) submitExam();
+            });
+        }
+
+        async function submitExam() {
+            clearInterval(timerInterval);
+            
+            let score = 0;
+            let total = questionsData.length;
+            
+            for (let i = 0; i < total; i++) {
+                let q = questionsData[i];
+                let userChoiceText = userAnswers[q.DisplayNumber] || "";
+                
+                if (userChoiceText.trim() !== "" && userChoiceText.trim() === q.CorrectAnswer.trim()) {
+                    score++;
+                }
+            }
+            
+            let percentage = total > 0 ? ((score / total) * 100).toFixed(2) : "0.00";
+            let finalMarksText = score + " / " + total + " (" + percentage + "%)";
+
+            // गूगल शीट में स्कोर ऑटो-सेव करने के लिए API कॉल
+            try {
+                let scoreApiUrl = QUESTIONS_API_URL + "?action=saveScore&id=" + encodeURIComponent(currentUserObj.id) + "&score=" + encodeURIComponent(finalMarksText);
+                await fetch(scoreApiUrl, { method: "GET", redirect: "follow" });
+            } catch (err) {
+                console.error("Score update error:", err);
+            }
+
+            document.getElementById('certUser').textContent = currentUserObj.name + " (" + currentUserObj.rank + ", " + currentUserObj.unit + ")";
+            document.getElementById('certTotal').textContent = total;
+            document.getElementById('certScore').textContent = score;
+            document.getElementById('certPercent').textContent = percentage;
+            document.getElementById('certDate').textContent = new Date().toLocaleDateString('hi-IN');
+
+            document.getElementById('examScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.remove('hidden');
+        }
+
+        function updateCountdown() {
+            if (totalSeconds <= 0) {
+                clearInterval(timerInterval);
+                swal("समय समाप्त", "परीक्षा का समय समाप्त हो गया है।", "info");
+                setTimeout(submitExam, 1500);
+                return;
+            }
+            totalSeconds--;
+            let h = Math.floor(totalSeconds / 3600);
+            let m = Math.floor((totalSeconds % 3600) / 60);
+            let s = totalSeconds % 60;
+            document.getElementById('hours').textContent = h < 10 ? '0' + h : h;
+            document.getElementById('minutes').textContent = m < 10 ? '0' + m : m;
+            document.getElementById('seconds').textContent = s < 10 ? '0' + s : s;
+        }
+
+        initExamPortal();
     </script>
 </body>
 </html>
