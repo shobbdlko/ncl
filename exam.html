@@ -332,8 +332,20 @@
             return array;
         }
 
-        async function loadQuestionsFromSheet() {
+async function loadQuestionsFromSheet() {
             try {
+                // 1. सबसे पहले चेक करें कि क्या प्रश्न पहले से ब्राउज़र में कैache (Stored) हैं
+                let cachedQuestions = sessionStorage.getItem('cached_cctns_questions');
+                if (cachedQuestions) {
+                    console.log("Loading questions from Session Cache (Instant)");
+                    let allQuestions = JSON.parse(cachedQuestions);
+                    processAndSetQuestions(allQuestions);
+                    return;
+                }
+
+                // 2. यदि कैशे नहीं है, तो गूगल शीट से फेच करें
+                document.getElementById('questionText').textContent = "डेटा बेस से प्रश्न लोड हो रहे हैं, कृपया प्रतीक्षा करें...";
+                
                 let response = await fetch(QUESTIONS_API_URL, {
                     method: "GET",
                     redirect: "follow"
@@ -345,21 +357,37 @@
                 let allQuestions = data.questions || (Array.isArray(data) ? data : []);
 
                 if (Array.isArray(allQuestions) && allQuestions.length > 0) {
-                    let clonedArray = JSON.parse(JSON.stringify(allQuestions));
-                    shuffleArray(clonedArray);
-                    
-                    // शीट से रैंडम 100 प्रश्न छाँटें (अगर 100 से कम हैं तो उपलब्ध सभी आ जाएंगे)
-                    let selectCount = Math.min(clonedArray.length, 100);
-                    questionsData = clonedArray.slice(0, selectCount).map((q, index) => ({
-                        DisplayNumber: index + 1,
-                        Question: q.Question || "",
-                        OptionA: q.OptionA || "",
-                        OptionB: q.OptionB || "",
-                        OptionC: q.OptionC || "",
-                        OptionD: q.OptionD || "",
-                        CorrectAnswer: q.CorrectAnswer || ""
-                    }));
+                    // भविष्य के उपयोग के लिए सेशन स्टोरेज में सेव करें
+                    sessionStorage.setItem('cached_cctns_questions', JSON.stringify(allQuestions));
+                    processAndSetQuestions(allQuestions);
                 } else {
+                    throw new Error("शीट खाली है या प्रश्न नहीं मिले");
+                }
+            } catch (error) {
+                console.error("Error loading questions:", error);
+                alert("प्रश्न लोड करने में समस्या आ रही है। कृपया अपना इंटरनेट कनेक्शन या गूगल शीट की जाँच करें।");
+                questionsData = [
+                    { DisplayNumber: 1, Question: "कोर्ट ट्रायल विवरण हेतु कौन सा फॉर्म उपयोग किया जाता है?", OptionA: "IIF-2", OptionB: "IIF-3", OptionC: "IIF-6", OptionD: "उपरोक्त सभी", CorrectAnswer: "IIF-6" }
+                ];
+            }
+        }
+
+        // प्रश्नों को शफल और रैंडम 100 छाँटने का अलग फंक्शन ताकि कोड साफ़ रहे
+        function processAndSetQuestions(allQuestions) {
+            let clonedArray = JSON.parse(JSON.stringify(allQuestions));
+            shuffleArray(clonedArray);
+            
+            let selectCount = Math.min(clonedArray.length, 100);
+            questionsData = clonedArray.slice(0, selectCount).map((q, index) => ({
+                DisplayNumber: index + 1,
+                Question: q.Question || "",
+                OptionA: q.OptionA || "",
+                OptionB: q.OptionB || "",
+                OptionC: q.OptionC || "",
+                OptionD: q.OptionD || "",
+                CorrectAnswer: q.CorrectAnswer || ""
+            }));
+        } else {
                     throw new Error("शीट खाली है या प्रश्न नहीं मिले");
                 }
             } catch (error) {
