@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CCTNS Exam Portal — UP Police Login</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <!-- SweetAlert CSS & JS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: #0b1526;
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow-x: hidden;
+            padding: 20px;
+        }
+
+        .login-grid {
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 32px 32px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .main-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 440px;
+            margin: 0 auto;
+        }
+
+        .police-card {
+            background: rgba(19, 32, 56, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(201, 150, 47, 0.35);
+            border-radius: 16px;
+            padding: 32px 28px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 
+                        0 0 30px rgba(127, 231, 222, 0.05);
+        }
+
+        .login-emblem {
+            margin: 0 auto 12px auto;
+            display: block;
+            text-align: center;
+        }
+
+        .header-box {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .eyebrow-text {
+            color: #c9962f;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .title-text {
+            color: #ffffff;
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin: 4px 0;
+        }
+
+        .sub-text {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .divider {
+            position: relative;
+            margin: 20px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .divider span {
+            position: relative;
+            top: 10px;
+            background: #132038;
+            padding: 0 12px;
+            color: #7fe7de;
+            font-size: 0.82rem;
+            white-space: nowrap;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 24px;
+        }
+
+        .pw-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(11, 21, 38, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .pw-input:focus {
+            border-color: #7fe7de;
+            box-shadow: 0 0 0 3px rgba(127, 231, 222, 0.15);
+        }
+
+        .pw-wrap {
+            position: relative;
+            width: 100%;
+        }
+
+        .pw-eye {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 4px;
+        }
+
+        .btn-gold {
+            width: 100%;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #c9962f, #9a6f1a);
+            border: none;
+            border-radius: 8px;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-gold:hover {
+            background: linear-gradient(135deg, #d8a53e, #ab7d20);
+            box-shadow: 0 4px 15px rgba(201, 150, 47, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-grid" aria-hidden="true"></div>
+
+    <div class="main-container">
+        <div id="loginScreen" class="police-card">
+            <div class="login-emblem">
+                <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="lg1" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0" stop-color="#1c2f4e"></stop>
+                            <stop offset="1" stop-color="#0b1526"></stop>
+                        </linearGradient>
+                    </defs>
+                    <path d="M32 4 8 13v17c0 14 10.5 24.5 24 30 13.5-5.5 24-16 24-30V13L32 4Z" fill="url(#lg1)" stroke="#c9962f" stroke-width="2.4"></path>
+                    <path d="M32 11 14 18v12c0 10.5 7.6 18.6 18 23 10.4-4.4 18-12.5 18-23V18L32 11Z" fill="none" stroke="rgba(201,150,47,.45)" stroke-width="1"></path>
+                    <circle cx="32" cy="29" r="9" fill="none" stroke="#7fe7de" stroke-width="2"></circle>
+                    <path d="M32 20v-4M32 42v-4M23 29h-4M45 29h-4" stroke="#7fe7de" stroke-width="2" stroke-linecap="round"></path>
+                    <circle cx="32" cy="29" r="3" fill="#7fe7de"></circle>
+                </svg>
+            </div>
+
+            <div class="header-box">
+                <div class="eyebrow-text">UTTAR PRADESH POLICE</div>
+                <h1 class="title-text">CCTNS Exam Portal</h1>
+                <div class="sub-text">Police Commissionerate Lucknow</div>
+            </div>
+
+            <div class="divider">
+                <span>Online Assessment Login</span>
+            </div>
+
+            <form id="loginForm" class="form-group" onsubmit="event.preventDefault(); handleLogin();">
+                <div>
+                    <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 6px;">यूजर नेम (User Name)</label>
+                    <input type="text" id="userIdInput" class="pw-input" placeholder="उदा. EMP101" required>
+                </div>
+
+                <div>
+                    <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 6px;">पासवर्ड (Password)</label>
+                    <div class="pw-wrap">
+                        <input type="password" id="userPassInput" class="pw-input" placeholder="पासवर्ड दर्ज करें" required>
+                        <button type="button" class="pw-eye" onclick="togglePasswordVisibility('userPassInput')">👁</button>
+                    </div>
+                </div>
+
+                <button type="submit" id="loginBtn" class="btn-gold" style="margin-top: 8px;">
+                    <i class="fa-solid fa-right-to-bracket"></i> Login
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        'use strict';
+
+        // अपनी गूगल शीट Apps Script Web App URL यहाँ डालें
+        const GOOGLE_SHEET_USERS_API_URL = "https://script.google.com/macros/s/AKfycbzg4j5nzwKyzGqlCirPInK0D1hpOtNqK7XfmjS8iG_eh6l_78mOfPcGFzQOZgp7cGs/exec"; 
+
+        function togglePasswordVisibility(elementId) {
+            const passInput = document.getElementById(elementId);
+            passInput.type = passInput.type === 'password' ? 'text' : 'password';
+        }
+
+        // गूगल शीट से Users डेटा फ़ेच करने का फ़ंक्शन
+        async function fetchUsersFromGoogleSheet() {
+            try {
+                let response = await fetch(GOOGLE_SHEET_USERS_API_URL);
+                if (!response.ok) throw new Error("डेटा फ़ेच करने में विफलता");
+                let json = await response.json();
+                
+                let usersDb = {};
+                if (Array.isArray(json)) {
+                    json.forEach(row => {
+                        let uId = String(row.id || "").trim();
+                        if (uId) {
+                            usersDb[uId] = {
+                                id: uId,
+                                name: String(row.name || "अज्ञात").trim(),
+                                rank: String(row.rank || "कर्मचारी").trim(),
+                                unit: String(row.unit || "मुख्यालय").trim(),
+                                pass: String(row.pass || "").trim()
+                            };
+                        }
+                    });
+                }
+                return usersDb;
+            } catch (error) {
+                console.error("Google Sheet Fetch Error:", error);
+                return null;
+            }
+        }
+
+        // फ़ॉलबैक डिफ़ॉल्ट डेटा (यदि इंटरनेट/शीट कनेक्ट न हो सके)
+        function getDefaultUsers() {
+            return {
+                "EMP101": { name: "राजेश कुमार", id: "EMP101", unit: "लखनऊ मुख्यालय", rank: "उप निरीक्षक", pass: "1234" },
+                "EMP102": { name: "अमित शर्मा", id: "EMP102", unit: "कानपुर कमिश्नरेट", rank: "मुख्य आरक्षी", pass: "1234" }
+            };
+        }
+
+        async function handleLogin() {
+            let uid = document.getElementById('userIdInput').value.trim();
+            let upass = document.getElementById('userPassInput').value.trim();
+            let btn = document.getElementById('loginBtn');
+
+            if (!uid || !upass) {
+                swal({
+                    title: "अधूरी जानकारी!",
+                    text: "कृपया यूजर नेम और पासवर्ड दोनों दर्ज करें।",
+                    type: "warning",
+                    confirmButtonColor: "#c9962f",
+                    confirmButtonText: "ठीक है"
+                });
+                return;
+            }
+
+            // लॉगिन बटन पर लोडिंग इंडिकेटर दिखाएं
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> सत्यापन हो रहा है...`;
+
+            // 1. गूगल शीट से लाइव यूजर डेटा फेच करें
+            let usersDb = await fetchUsersFromGoogleSheet();
+
+            // यदि लाइव डेटा प्राप्त न हो तो लोकल डिफ़ॉल्ट डेटा लें
+            if (!usersDb || Object.keys(usersDb).length === 0) {
+                usersDb = getDefaultUsers();
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> Login`;
+
+            // 2. यूजर नेम और पासवर्ड का सत्यापन
+            if (usersDb[uid]) {
+                let userRecord = usersDb[uid];
+
+                if (userRecord.pass && userRecord.pass === upass) {
+                    // यूजर डेटा को localStorage में सेव करें ताकि exam.html इसे एक्सेस कर सके
+                    localStorage.setItem('active_exam_user', JSON.stringify(userRecord));
+
+                    // Successfully Login मैसेज
+                    swal({
+                        title: "Successfully Login!",
+                        text: "सफलतापूर्वक लॉगिन हो गया है।",
+                        type: "success",
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+
+                    // exam.html पर रीडायरेक्ट करें
+                    setTimeout(() => {
+                        window.location.href = "exam.html";
+                    }, 1500);
+
+                } else {
+                    swal({
+                        title: "प्रवेश अस्वीकृत!",
+                        text: "गलत पासवर्ड! कृपया सही पासवर्ड दर्ज करें।",
+                        type: "error",
+                        confirmButtonColor: "#dc2626",
+                        confirmButtonText: "पुनः प्रयास करें"
+                    });
+                }
+            } else {
+                swal({
+                    title: "यूजर नहीं मिला!",
+                    text: "यह यूजर नेम गूगल शीट/डेटाबेस में दर्ज नहीं है।",
+                    type: "error",
+                    confirmButtonColor: "#dc2626",
+                    confirmButtonText: "ठीक है"
+                });
+            }
+        }
+    </script>
+</body>
+</html>
