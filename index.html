@@ -233,8 +233,8 @@
     <script>
         'use strict';
 
-        // अपनी गूगल शीट Apps Script Web App URL यहाँ डालें
-        const GOOGLE_SHEET_USERS_API_URL = "https://script.google.com/macros/s/AKfycbzy-HqhYHyBlEeM7co8iVYjRFKfY9X5dEFaBPmluN5Lq6yxjw_JHbYR0KgwffEUzDwD/exec"; 
+        // आपकी गूगल शीट Apps Script Web App URL
+        const GOOGLE_SHEET_USERS_API_URL = "https://script.google.com/macros/s/AKfycbxtTZPE6qQABrilLM0tquYFzsH-kH268BB7SoSdXU75oAHeB64Dc2s0mYFCKjnTBDVf/exec"; 
 
         function togglePasswordVisibility(elementId) {
             const passInput = document.getElementById(elementId);
@@ -244,13 +244,15 @@
         // गूगल शीट से Users डेटा फ़ेच करने का फ़ंक्शन
         async function fetchUsersFromGoogleSheet() {
             try {
-              let response = await fetch("यहाँ_अपनी_Web_App_URL_डालेिन");
-let data = await response.json();
-let usersList = data.users; // यहाँ से सारे यूजर्स मिल जाएंगे
+                let response = await fetch(GOOGLE_SHEET_USERS_API_URL);
+                if (!response.ok) throw new Error("डेटा फ़ेच करने में विफलता");
+                
+                let data = await response.json();
+                let usersArray = data.users || (Array.isArray(data) ? data : []);
                 
                 let usersDb = {};
-                if (Array.isArray(json)) {
-                    json.forEach(row => {
+                if (Array.isArray(usersArray)) {
+                    usersArray.forEach(row => {
                         let uId = String(row.id || "").trim();
                         if (uId) {
                             usersDb[uId] = {
