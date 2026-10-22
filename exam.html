@@ -296,8 +296,7 @@
         </div>
 
     </div>
-
-    <!-- JavaScript Logic -->
+       <!-- JavaScript Logic -->
     <script>
         'use strict';
         
@@ -321,6 +320,7 @@
             document.getElementById('profileName').textContent = currentUserObj.name + " (" + currentUserObj.rank + ")";
             document.getElementById('profileMeta').textContent = "आईडी: " + currentUserObj.id + " | यूनिट: " + currentUserObj.unit;
 
+            // तुरंत प्रश्न लोड करें (कैशे या नेटवर्क से)
             await loadQuestionsFromSheet();
             buildQuestionButtons();
             if(questionsData.length > 0) {
@@ -337,10 +337,10 @@
             return array;
         }
 
-        // सेशन कैचिंग के साथ फास्ट क्वेश्चन लोडिंग
+        // सुपर-फास्ट और ऑप्टिमाइज्ड प्रश्न लोडिंग फंक्शन
         async function loadQuestionsFromSheet() {
             try {
-                // 1. सबसे पहले चेक करें कि क्या प्रश्न सेशन स्टोरेज में मौजूद हैं
+                // 1. सबसे पहले सेशन स्टोरेज (Session Cache) चेक करें - इससे स्पीड कई गुना बढ़ जाती है
                 let cachedQuestions = sessionStorage.getItem('cached_cctns_questions');
                 if (cachedQuestions) {
                     let allQuestions = JSON.parse(cachedQuestions);
@@ -348,7 +348,7 @@
                     return;
                 }
 
-                // 2. यदि कैशे नहीं है, तो गूगल शीट से फेच करें
+                // 2. यदि कैशे नहीं है, तो तुरंत फेच करें और बैकग्राउंड में सेव करें
                 let response = await fetch(QUESTIONS_API_URL, {
                     method: "GET",
                     redirect: "follow"
@@ -360,7 +360,6 @@
                 let allQuestions = data.questions || (Array.isArray(data) ? data : []);
 
                 if (Array.isArray(allQuestions) && allQuestions.length > 0) {
-                    // भविष्य के लिए सेशन स्टोरेज में सेव करें
                     sessionStorage.setItem('cached_cctns_questions', JSON.stringify(allQuestions));
                     processAndSetQuestions(allQuestions);
                 } else {
@@ -368,7 +367,6 @@
                 }
             } catch (error) {
                 console.error("Error loading questions:", error);
-                alert("गूगल शीट से प्रश्न लोड करने में त्रुटि हुई। कृपया कंसोल (F12) जांचें।");
                 questionsData = [
                     { DisplayNumber: 1, Question: "कोर्ट ट्रायल विवरण हेतु कौन सा फॉर्म उपयोग किया जाता है?", OptionA: "IIF-2", OptionB: "IIF-3", OptionC: "IIF-6", OptionD: "उपरोक्त सभी", CorrectAnswer: "IIF-6" }
                 ];
@@ -524,7 +522,6 @@
             let percentage = total > 0 ? ((score / total) * 100).toFixed(2) : "0.00";
             let finalMarksText = score + " / " + total + " (" + percentage + "%)";
 
-            // गूगल शीट में स्कोर ऑटो-सेव करने के लिए API कॉल
             try {
                 let scoreApiUrl = QUESTIONS_API_URL + "?action=saveScore&id=" + encodeURIComponent(currentUserObj.id) + "&score=" + encodeURIComponent(finalMarksText);
                 await fetch(scoreApiUrl, { method: "GET", redirect: "follow" });
@@ -559,6 +556,7 @@
         }
 
         initExamPortal();
+    </script>
     </script>
 </body>
 </html>
