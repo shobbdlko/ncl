@@ -334,9 +334,9 @@
 
         async function loadQuestionsFromSheet() {
             try {
-                let response = await fetch(QUESTIONS_API_URL);
-                if (!response.ok) throw new Error("प्रश्न लोड करने में विफलता");
-                let data = await response.json();
+               let response = await fetch("यहाँ_अपनी_Web_App_URL_डालेिन");
+let data = await response.json();
+let allQuestions = data.questions; // यहाँ से सारे प्रश्न मिल जाएंगे
 
                 if (Array.isArray(data) && data.length > 0) {
                     let clonedArray = JSON.parse(JSON.stringify(data));
