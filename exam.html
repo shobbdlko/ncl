@@ -153,7 +153,48 @@
         }
 
         .hidden { display: none !important; }
-      </style>
+
+        @media print {
+            body { 
+                background: white !important; 
+                color: black !important; 
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .no-print { 
+                display: none !important; 
+            }
+            #resultScreen, #resultScreen * { 
+                visibility: visible !important; 
+            }
+            #resultScreen {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: white !important;
+                color: black !important;
+                box-shadow: none !important;
+            }
+            .certificate-box {
+                border: 4px double #000 !important;
+                background: white !important;
+                color: black !important;
+                margin: 0 auto !important;
+                margin-top: 0 !important;
+                box-shadow: none !important;
+            }
+            .certificate-box h1, .certificate-box h3 { 
+                color: black !important; 
+            }
+            @page {
+                size: A4 portrait;
+                margin: 5mm;
+            }
+        }
+    </style>
 </head>
 <body>
 
@@ -176,24 +217,24 @@
                     </div>
 
                     <!-- प्रश्न पाठ -->
-                    <div id="questionText" style="font-size: 1.1rem; font-weight: 600; color: #ffffff; margin-bottom: 20px; line-height: 1.5;"></div>
+                    <div id="questionText" style="font-size: 1.1rem; font-weight: 600; color: #ffffff; margin-bottom: 20px; line-height: 1.5;">प्रश्न लोड हो रहे हैं...</div>
 
                     <!-- विकल्प लिस्ट -->
                     <div id="optionsContainer">
                         <div onclick="selectOption('A')" class="option-item">
-                            <input type="radio" name="secureAnswer" id="radioA">
+                            <input type="radio" name="secureAnswer" id="radioA" value="">
                             <span id="textA" style="font-size: 0.95rem;"></span>
                         </div>
                         <div onclick="selectOption('B')" class="option-item">
-                            <input type="radio" name="secureAnswer" id="radioB">
+                            <input type="radio" name="secureAnswer" id="radioB" value="">
                             <span id="textB" style="font-size: 0.95rem;"></span>
                         </div>
                         <div onclick="selectOption('C')" class="option-item">
-                            <input type="radio" name="secureAnswer" id="radioC">
+                            <input type="radio" name="secureAnswer" id="radioC" value="">
                             <span id="textC" style="font-size: 0.95rem;"></span>
                         </div>
                         <div onclick="selectOption('D')" class="option-item">
-                            <input type="radio" name="secureAnswer" id="radioD">
+                            <input type="radio" name="secureAnswer" id="radioD" value="">
                             <span id="textD" style="font-size: 0.95rem;"></span>
                         </div>
                     </div>
@@ -242,7 +283,10 @@
             </div>
 
             <div class="cert-actions-container no-print">
-                              <button onclick="window.location.href='index.html'" class="btn-slate">लॉगिन पेज पर वापस जाएँ</button>
+                <button onclick="window.print()" class="btn-gold" style="width: auto;">
+                    <i class="fa-solid fa-print"></i> प्रिंट / PDF सेव करें
+                </button>
+                <button onclick="window.location.href='index.html'" class="btn-slate">लॉगिन पेज पर वापस जाएँ</button>
             </div>
         </div>
 
@@ -259,28 +303,27 @@
         let totalSeconds = 3600;
         let timerInterval = null;
 
-        // पेज लोड होते ही लॉगिन यूजर का डेटा चेक करें और प्रोफाइल सेट करें
-        function initExamPortal() {
+        const QUESTIONS_API_URL = "https://script.google.com/macros/s/AKfycbyf-O21QwTkRVC2N0xlQN0R-bLFHhOnT4JxMytWREKYA8aHHEw8D84VazThbh0p91HwFw/exec"; // आपकी प्रश्नों वाली URL
+
+        async function initExamPortal() {
             let savedUser = localStorage.getItem('active_exam_user');
             if (!savedUser) {
-                // यदि यूजर बिना लॉगिन किए सीधे इस पेज पर आया हो
                 window.location.href = "index.html";
                 return;
             }
 
             currentUserObj = JSON.parse(savedUser);
-
-            // यूजर के मुताबिक प्रोफाइल डिटेल्स प्रदर्शित करें
             document.getElementById('profileName').textContent = currentUserObj.name + " (" + currentUserObj.rank + ")";
             document.getElementById('profileMeta').textContent = "आईडी: " + currentUserObj.id + " | यूनिट: " + currentUserObj.unit;
 
-            loadQuestions();
+            await loadQuestionsFromSheet();
             buildQuestionButtons();
-            renderQuestion(0);
+            if(questionsData.length > 0) {
+                renderQuestion(0);
+            }
             timerInterval = setInterval(updateCountdown, 1000);
         }
 
-        // ऐरे को रैण्डमली शिफ़्ल करने के लिए फ़ंक्शन
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 let j = Math.floor(Math.random() * (i + 1));
@@ -289,41 +332,35 @@
             return array;
         }
 
-        function loadDefaultQuestions() {
-            return [
-                { DisplayNumber: 1, Question: "कोर्ट ट्रायल विवरण हेतु कौन सा फॉर्म उपयोग किया जाता है?", OptionA: "IIF-2", OptionB: "IIF-3", OptionC: "IIF-6", OptionD: "उपरोक्त सभी", CorrectAnswer: "IIF-6" },
-                { DisplayNumber: 2, Question: "अपराध की सूचना दर्ज करने के लिए कौन सा फॉर्म प्रयोग होता है?", OptionA: "IIF-1", OptionB: "IIF-2", OptionC: "IIF-4", OptionD: "IIF-5", CorrectAnswer: "IIF-1" }
-            ];
-        }
+        async function loadQuestionsFromSheet() {
+            try {
+                let response = await fetch(QUESTIONS_API_URL);
+                if (!response.ok) throw new Error("प्रश्न लोड करने में विफलता");
+                let data = await response.json();
 
-        // हर बार लॉगिन/पेज लोड होने पर प्रश्न बैंक से 100 प्रश्न रैण्डमली लोड करने का फ़ंक्शन
-        function loadQuestions() {
-            let saved = localStorage.getItem('custom_exam_questions');
-            let allQuestions = [];
-
-            if (saved) {
-                try {
-                    let parsed = JSON.parse(saved);
-                    if (parsed.length > 0) {
-                        allQuestions = parsed;
-                    }
-                } catch(e) {}
-            }
-
-            if (allQuestions.length === 0) {
-                allQuestions = loadDefaultQuestions();
-            }
-
-            // प्रश्नों को शिफ़्ल (रैण्डम) करें
-            let clonedArray = JSON.parse(JSON.stringify(allQuestions));
-            shuffleArray(clonedArray);
-
-            // पहले 100 प्रश्न चुनें (यदि 100 से कम हैं तो उपलब्ध सभी आ जाएंगे)
-            questionsData = clonedArray.slice(0, 100);
-
-            // डिस्प्ले नंबर रीसेट करें
-            for (let i = 0; i < questionsData.length; i++) {
-                questionsData[i].DisplayNumber = i + 1;
+                if (Array.isArray(data) && data.length > 0) {
+                    let clonedArray = JSON.parse(JSON.stringify(data));
+                    shuffleArray(clonedArray);
+                    
+                    // 100 प्रश्न रैंडम छाँटें
+                    questionsData = clonedArray.slice(0, 100).map((q, index) => ({
+                        DisplayNumber: index + 1,
+                        Question: q.Question,
+                        OptionA: q.OptionA,
+                        OptionB: q.OptionB,
+                        OptionC: q.OptionC,
+                        OptionD: q.OptionD,
+                        CorrectAnswer: q.CorrectAnswer
+                    }));
+                } else {
+                    throw new Error("शीट खाली है");
+                }
+            } catch (error) {
+                console.error("Error loading questions:", error);
+                // डिफ़ॉल्ट प्रश्न यदि शीट कनेक्ट न हो
+                questionsData = [
+                    { DisplayNumber: 1, Question: "कोर्ट ट्रायल विवरण हेतु कौन सा फॉर्म उपयोग किया जाता है?", OptionA: "IIF-2", OptionB: "IIF-3", OptionC: "IIF-6", OptionD: "उपरोक्त सभी", CorrectAnswer: "IIF-6" }
+                ];
             }
         }
 
@@ -485,7 +522,6 @@
             document.getElementById('seconds').textContent = s < 10 ? '0' + s : s;
         }
 
-        // पोर्टल इनिशियलाइज़ेशन कॉल
         initExamPortal();
     </script>
 </body>
