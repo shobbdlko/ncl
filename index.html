@@ -234,17 +234,16 @@
         'use strict';
 
         // Google Apps Script URL
-        const GOOGLE_SHEET_USERS_API_URL = "https://script.google.com/macros/s/AKfycbxtTZPE6qQABrilLM0tquYFzsH-kH268BB7SoSdXU75oAHeB64Dc2s0mYFCKjnTBDVf/exec"; 
+        const GOOGLE_SHEET_USERS_API_URL = "https://script.google.com/macros/s/AKfycbxarvju20MusQOY5qMGL4v6cpEUvnSkx-1rZocKFkTmh_afhvK0T8gg7xktKPaUU4K3/exec"; 
 
         function togglePasswordVisibility(elementId) {
             const passInput = document.getElementById(elementId);
             passInput.type = passInput.type === 'password' ? 'text' : 'password';
         }
 
-        // गूगल शीट से Users डेटा फ़ेच करने का अपडेटेड फ़ंक्शन
+        // केवल गूगल शीट से Users डेटा फ़ेच करने का फ़ंक्शन
         async function fetchUsersFromGoogleSheet() {
             try {
-                // redirect: "follow" जोड़ने से 302 रिडायरेक्ट सही से हैंडल होता है
                 let response = await fetch(GOOGLE_SHEET_USERS_API_URL, {
                     method: "GET",
                     redirect: "follow"
@@ -277,14 +276,6 @@
             }
         }
 
-        // फ़ॉलबैक डिफ़ॉल्ट डेटा (यदि इंटरनेट/शीट कनेक्ट न हो सके)
-        function getDefaultUsers() {
-            return {
-                "EMP101": { name: "राजेश कुमार", id: "EMP101", unit: "लखनऊ मुख्यालय", rank: "उप निरीक्षक", pass: "1234" },
-                "EMP102": { name: "अमित शर्मा", id: "EMP102", unit: "कानपुर कमिश्नरेट", rank: "मुख्य आरक्षी", pass: "1234" }
-            };
-        }
-
         async function handleLogin() {
             let uid = document.getElementById('userIdInput').value.trim();
             let upass = document.getElementById('userPassInput').value.trim();
@@ -305,26 +296,32 @@
             btn.disabled = true;
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> सत्यापन हो रहा है...`;
 
-            // 1. गूगल शीट से लाइव यूजर डेटा फेच करें
+            // 1. केवल गूगल शीट से लाइव यूजर डेटा फेच करें
             let usersDb = await fetchUsersFromGoogleSheet();
-
-            // यदि लाइव डेटा प्राप्त न हो तो लोकल डिफ़ॉल्ट डेटा लें
-            if (!usersDb || Object.keys(usersDb).length === 0) {
-                usersDb = getDefaultUsers();
-            }
 
             btn.disabled = false;
             btn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> Login`;
+
+            // यदि शीट से डेटा प्राप्त न हो सके (सर्वर एरर या इंटरनेट समस्या)
+            if (!usersDb) {
+                swal({
+                    title: "कनेक्शन त्रुटि!",
+                    text: "गूगल शीट से डेटा प्राप्त नहीं हो सका। कृपया अपना इंटरनेट कनेक्शन जांचें।",
+                    type: "error",
+                    confirmButtonColor: "#dc2626",
+                    confirmButtonText: "ठीक है"
+                });
+                return;
+            }
 
             // 2. यूजर नेम और पासवर्ड का सत्यापन
             if (usersDb[uid]) {
                 let userRecord = usersDb[uid];
 
                 if (userRecord.pass && String(userRecord.pass).trim() === upass) {
-                    // यूजर डेटा को localStorage में सेव करें ताकि exam.html इसे एक्सेस कर सके
+                    // यूजर डेटा को localStorage में सेव करें
                     localStorage.setItem('active_exam_user', JSON.stringify(userRecord));
 
-                    // Successfully Login मैसेज
                     swal({
                         title: "Successfully Login!",
                         text: "सफलतापूर्वक लॉगिन हो गया है।",
@@ -333,7 +330,6 @@
                         showConfirmButton: false
                     });
 
-                    // exam.html पर रीडायरेक्ट करें
                     setTimeout(() => {
                         window.location.href = "exam.html";
                     }, 1500);
@@ -350,7 +346,7 @@
             } else {
                 swal({
                     title: "यूजर नहीं मिला!",
-                    text: "यह यूजर नेम गूगल शीट/डेटाबेस में दर्ज नहीं है।",
+                    text: "यह यूजर नेम गूगल शीट डेटाबेस में दर्ज नहीं है।",
                     type: "error",
                     confirmButtonColor: "#dc2626",
                     confirmButtonText: "ठीक है"
