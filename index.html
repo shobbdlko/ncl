@@ -244,9 +244,9 @@
         // गूगल शीट से Users डेटा फ़ेच करने का फ़ंक्शन
         async function fetchUsersFromGoogleSheet() {
             try {
-                let response = await fetch(GOOGLE_SHEET_USERS_API_URL);
-                if (!response.ok) throw new Error("डेटा फ़ेच करने में विफलता");
-                let json = await response.json();
+              let response = await fetch("यहाँ_अपनी_Web_App_URL_डालेिन");
+let data = await response.json();
+let usersList = data.users; // यहाँ से सारे यूजर्स मिल जाएंगे
                 
                 let usersDb = {};
                 if (Array.isArray(json)) {
