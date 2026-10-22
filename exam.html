@@ -332,20 +332,18 @@
             return array;
         }
 
-async function loadQuestionsFromSheet() {
+        // सेशन कैचिंग के साथ फास्ट क्वेश्चन लोडिंग
+        async function loadQuestionsFromSheet() {
             try {
-                // 1. सबसे पहले चेक करें कि क्या प्रश्न पहले से ब्राउज़र में कैache (Stored) हैं
+                // 1. सबसे पहले चेक करें कि क्या प्रश्न सेशन स्टोरेज में मौजूद हैं
                 let cachedQuestions = sessionStorage.getItem('cached_cctns_questions');
                 if (cachedQuestions) {
-                    console.log("Loading questions from Session Cache (Instant)");
                     let allQuestions = JSON.parse(cachedQuestions);
                     processAndSetQuestions(allQuestions);
                     return;
                 }
 
                 // 2. यदि कैशे नहीं है, तो गूगल शीट से फेच करें
-                document.getElementById('questionText').textContent = "डेटा बेस से प्रश्न लोड हो रहे हैं, कृपया प्रतीक्षा करें...";
-                
                 let response = await fetch(QUESTIONS_API_URL, {
                     method: "GET",
                     redirect: "follow"
@@ -357,7 +355,7 @@ async function loadQuestionsFromSheet() {
                 let allQuestions = data.questions || (Array.isArray(data) ? data : []);
 
                 if (Array.isArray(allQuestions) && allQuestions.length > 0) {
-                    // भविष्य के उपयोग के लिए सेशन स्टोरेज में सेव करें
+                    // भविष्य के लिए सेशन स्टोरेज में सेव करें
                     sessionStorage.setItem('cached_cctns_questions', JSON.stringify(allQuestions));
                     processAndSetQuestions(allQuestions);
                 } else {
@@ -365,14 +363,13 @@ async function loadQuestionsFromSheet() {
                 }
             } catch (error) {
                 console.error("Error loading questions:", error);
-                alert("प्रश्न लोड करने में समस्या आ रही है। कृपया अपना इंटरनेट कनेक्शन या गूगल शीट की जाँच करें।");
+                alert("गूगल शीट से प्रश्न लोड करने में त्रुटि हुई। कृपया कंसोल (F12) जांचें।");
                 questionsData = [
                     { DisplayNumber: 1, Question: "कोर्ट ट्रायल विवरण हेतु कौन सा फॉर्म उपयोग किया जाता है?", OptionA: "IIF-2", OptionB: "IIF-3", OptionC: "IIF-6", OptionD: "उपरोक्त सभी", CorrectAnswer: "IIF-6" }
                 ];
             }
         }
 
-        // प्रश्नों को शफल और रैंडम 100 छाँटने का अलग फंक्शन ताकि कोड साफ़ रहे
         function processAndSetQuestions(allQuestions) {
             let clonedArray = JSON.parse(JSON.stringify(allQuestions));
             shuffleArray(clonedArray);
@@ -387,16 +384,6 @@ async function loadQuestionsFromSheet() {
                 OptionD: q.OptionD || "",
                 CorrectAnswer: q.CorrectAnswer || ""
             }));
-        } else {
-                    throw new Error("शीट खाली है या प्रश्न नहीं मिले");
-                }
-            } catch (error) {
-                console.error("Error loading questions:", error);
-                alert("गूगल शीट से प्रश्न लोड करने में त्रुटि हुई। कृपया कंसोल (F12) जांचें।");
-                questionsData = [
-                    { DisplayNumber: 1, Question: "कोर्ट ट्रायल विवरण हेतु कौन सा फॉर्म उपयोग किया जाता है?", OptionA: "IIF-2", OptionB: "IIF-3", OptionC: "IIF-6", OptionD: "उपरोक्त सभी", CorrectAnswer: "IIF-6" }
-                ];
-            }
         }
 
         function buildQuestionButtons() {
