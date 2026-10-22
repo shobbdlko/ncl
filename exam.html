@@ -303,7 +303,7 @@
         let totalSeconds = 3600;
         let timerInterval = null;
 
-        const QUESTIONS_API_URL = "https://script.google.com/macros/s/AKfycbzy-HqhYHyBlEeM7co8iVYjRFKfY9X5dEFaBPmluN5Lq6yxjw_JHbYR0KgwffEUzDwD/exec"; // आपकी प्रश्नों वाली URL
+        const QUESTIONS_API_URL = "https://script.google.com/macros/s/AKfycbyDzS3NqtINc16q-QlPfYiMtzUZn29QhD8KuuAZmLo5eRpDfas7x93B8rYHAJf-j7fs/exec"; 
 
         async function initExamPortal() {
             let savedUser = localStorage.getItem('active_exam_user');
@@ -334,30 +334,37 @@
 
         async function loadQuestionsFromSheet() {
             try {
-               let response = await fetch("यहाँ_अपनी_Web_App_URL_डालेिन");
-let data = await response.json();
-let allQuestions = data.questions; // यहाँ से सारे प्रश्न मिल जाएंगे
+                let response = await fetch(QUESTIONS_API_URL, {
+                    method: "GET",
+                    redirect: "follow"
+                });
 
-                if (Array.isArray(data) && data.length > 0) {
-                    let clonedArray = JSON.parse(JSON.stringify(data));
+                if (!response.ok) throw new Error("प्रश्न फ़ेच करने में विफलता");
+
+                let data = await response.json();
+                let allQuestions = data.questions || (Array.isArray(data) ? data : []);
+
+                if (Array.isArray(allQuestions) && allQuestions.length > 0) {
+                    let clonedArray = JSON.parse(JSON.stringify(allQuestions));
                     shuffleArray(clonedArray);
                     
-                    // 100 प्रश्न रैंडम छाँटें
-                    questionsData = clonedArray.slice(0, 100).map((q, index) => ({
+                    // शीट से रैंडम 100 प्रश्न छाँटें (अगर 100 से कम हैं तो उपलब्ध सभी आ जाएंगे)
+                    let selectCount = Math.min(clonedArray.length, 100);
+                    questionsData = clonedArray.slice(0, selectCount).map((q, index) => ({
                         DisplayNumber: index + 1,
-                        Question: q.Question,
-                        OptionA: q.OptionA,
-                        OptionB: q.OptionB,
-                        OptionC: q.OptionC,
-                        OptionD: q.OptionD,
-                        CorrectAnswer: q.CorrectAnswer
+                        Question: q.Question || "",
+                        OptionA: q.OptionA || "",
+                        OptionB: q.OptionB || "",
+                        OptionC: q.OptionC || "",
+                        OptionD: q.OptionD || "",
+                        CorrectAnswer: q.CorrectAnswer || ""
                     }));
                 } else {
-                    throw new Error("शीट खाली है");
+                    throw new Error("शीट खाली है या प्रश्न नहीं मिले");
                 }
             } catch (error) {
                 console.error("Error loading questions:", error);
-                // डिफ़ॉल्ट प्रश्न यदि शीट कनेक्ट न हो
+                alert("गूगल शीट से प्रश्न लोड करने में त्रुटि हुई। कृपया कंसोल (F12) जांचें।");
                 questionsData = [
                     { DisplayNumber: 1, Question: "कोर्ट ट्रायल विवरण हेतु कौन सा फॉर्म उपयोग किया जाता है?", OptionA: "IIF-2", OptionB: "IIF-3", OptionC: "IIF-6", OptionD: "उपरोक्त सभी", CorrectAnswer: "IIF-6" }
                 ];
@@ -479,7 +486,7 @@ let allQuestions = data.questions; // यहाँ से सारे प्र
             });
         }
 
-        function submitExam() {
+        async function submitExam() {
             clearInterval(timerInterval);
             
             let score = 0;
@@ -495,6 +502,15 @@ let allQuestions = data.questions; // यहाँ से सारे प्र
             }
             
             let percentage = total > 0 ? ((score / total) * 100).toFixed(2) : "0.00";
+            let finalMarksText = score + " / " + total + " (" + percentage + "%)";
+
+            // गूगल शीट में स्कोर ऑटो-सेव करने के लिए API कॉल
+            try {
+                let scoreApiUrl = QUESTIONS_API_URL + "?action=saveScore&id=" + encodeURIComponent(currentUserObj.id) + "&score=" + encodeURIComponent(finalMarksText);
+                await fetch(scoreApiUrl, { method: "GET", redirect: "follow" });
+            } catch (err) {
+                console.error("Score update error:", err);
+            }
 
             document.getElementById('certUser').textContent = currentUserObj.name + " (" + currentUserObj.rank + ", " + currentUserObj.unit + ")";
             document.getElementById('certTotal').textContent = total;
