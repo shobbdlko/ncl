@@ -233,7 +233,7 @@
     <script>
         'use strict';
 
-        // आपकी गूगल शीट Apps Script Web App URL
+        // Google Apps Script URL
         const GOOGLE_SHEET_USERS_API_URL = "https://script.google.com/macros/s/AKfycbxtTZPE6qQABrilLM0tquYFzsH-kH268BB7SoSdXU75oAHeB64Dc2s0mYFCKjnTBDVf/exec"; 
 
         function togglePasswordVisibility(elementId) {
@@ -241,10 +241,15 @@
             passInput.type = passInput.type === 'password' ? 'text' : 'password';
         }
 
-        // गूगल शीट से Users डेटा फ़ेच करने का फ़ंक्शन
+        // गूगल शीट से Users डेटा फ़ेच करने का अपडेटेड फ़ंक्शन
         async function fetchUsersFromGoogleSheet() {
             try {
-                let response = await fetch(GOOGLE_SHEET_USERS_API_URL);
+                // redirect: "follow" जोड़ने से 302 रिडायरेक्ट सही से हैंडल होता है
+                let response = await fetch(GOOGLE_SHEET_USERS_API_URL, {
+                    method: "GET",
+                    redirect: "follow"
+                });
+
                 if (!response.ok) throw new Error("डेटा फ़ेच करने में विफलता");
                 
                 let data = await response.json();
@@ -315,7 +320,7 @@
             if (usersDb[uid]) {
                 let userRecord = usersDb[uid];
 
-                if (userRecord.pass && userRecord.pass === upass) {
+                if (userRecord.pass && String(userRecord.pass).trim() === upass) {
                     // यूजर डेटा को localStorage में सेव करें ताकि exam.html इसे एक्सेस कर सके
                     localStorage.setItem('active_exam_user', JSON.stringify(userRecord));
 
