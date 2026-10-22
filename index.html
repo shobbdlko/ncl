@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
     <!-- FontAwesome Icons -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <!-- SweetAlert CSS & JS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.js"></script>
@@ -233,8 +233,9 @@
     <script>
         'use strict';
 
-        const GOOGLE_SHEET_USERS_API_URL = "https://script.google.com/macros/s/AKfycbyDzS3NqtINc16q-QlPfYiMtzUZn29QhD8KuuAZmLo5eRpDfas7x93B8rYHAJf-j7fs/exec"; 
-        
+        // Google Apps Script API URL
+        const GOOGLE_SHEET_USERS_API_URL = "https://script.google.com/macros/s/AKfycbxarvju20MusQOY5qMGL4v6cpEUvnSkx-1rZocKFkTmh_afhvK0T8gg7xktKPaUU4K3/exec"; 
+
         let cachedUsersDb = null;
         let prefetchPromise = null;
 
@@ -243,53 +244,63 @@
             passInput.type = passInput.type === 'password' ? 'text' : 'password';
         }
 
-        // पेज खोलते ही बैकग्राउंड में डेटा प्री-फेच करें (Response Time 0s करने के लिए)
-        function prefetchUsers() {
-            prefetchPromise = fetch(GOOGLE_SHEET_USERS_API_URL, { method: "GET", redirect: "follow" })
-                .then(res => res.json())
-                .then(data => {
-                    let usersArray = data.users || (Array.isArray(data) ? data : []);
-                    let usersDb = {};
-                    if (Array.isArray(usersArray)) {
-                        usersArray.forEach(row => {
-                            let uId = String(row.id || "").trim();
-                            if (uId) {
-                                usersDb[uId] = {
-                                    id: uId,
-                                    name: String(row.name || "अज्ञात").trim(),
-                                    rank: String(row.rank || "कर्मचारी").trim(),
-                                    unit: String(row.unit || "मुख्यालय").trim(),
-                                    pass: String(row.pass || "").trim()
-                                };
-                            }
-                        });
-                    }
-                    cachedUsersDb = usersDb;
-                    return usersDb;
-                })
-                .catch(err => {
-                    console.error("Prefetch error:", err);
-                    return null;
-                });
+        // 1. बैकग्राउंड प्री-फेचिंग: पेज लोड होते ही डेटा फेच होना शुरू हो जाएगा
+        function prefetchUsersFromGoogleSheet() {
+            prefetchPromise = fetch(GOOGLE_SHEET_USERS_API_URL, {
+                method: "GET",
+                redirect: "follow"
+            })
+            .then(res => res.json())
+            .then(data => {
+                let usersArray = data.users || (Array.isArray(data) ? data : []);
+                let usersDb = {};
+                if (Array.isArray(usersArray)) {
+                    usersArray.forEach(row => {
+                        let uId = String(row.id || "").trim();
+                        if (uId) {
+                            usersDb[uId] = {
+                                id: uId,
+                                name: String(row.name || "अज्ञात").trim(),
+                                rank: String(row.rank || "कर्मचारी").trim(),
+                                unit: String(row.unit || "मुख्यालय").trim(),
+                                pass: String(row.pass || "").trim()
+                            };
+                        }
+                    });
+                }
+                cachedUsersDb = usersDb;
+                return usersDb;
+            })
+            .catch(error => {
+                console.error("Background prefetch error:", error);
+                return null;
+            });
         }
 
-        // पेज लोड होते ही प्री-फेच ट्रिगर करें
-        window.addEventListener('DOMContentLoaded', prefetchUsers);
+        // जैसे ही DOM रेडी हो, प्री-फेच ट्रिगर करें
+        window.addEventListener('DOMContentLoaded', prefetchUsersFromGoogleSheet);
 
+        // 2. लॉगिन हैंडलर
         async function handleLogin() {
             let uid = document.getElementById('userIdInput').value.trim();
             let upass = document.getElementById('userPassInput').value.trim();
             let btn = document.getElementById('loginBtn');
 
             if (!uid || !upass) {
-                swal({ title: "अधूरी जानकारी!", text: "कृपया यूजर नेम और पासवर्ड दर्ज करें।", type: "warning", confirmButtonColor: "#c9962f" });
+                swal({
+                    title: "अधूरी जानकारी!",
+                    text: "कृपया यूजर नेम और पासवर्ड दोनों दर्ज करें।",
+                    type: "warning",
+                    confirmButtonColor: "#c9962f",
+                    confirmButtonText: "ठीक है"
+                });
                 return;
             }
 
             btn.disabled = true;
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> सत्यापन हो रहा है...`;
 
-            // यदि बैकग्राउंड में डेटा पहले ही फेच हो चुका है तो तुरंत उपयोग करें
+            // यदि कैशे उपलब्ध है तो तुरंत लें, अन्यथा प्री-फेच प्रॉमिस का इंतज़ार करें
             let usersDb = cachedUsersDb;
             if (!usersDb && prefetchPromise) {
                 usersDb = await prefetchPromise;
@@ -299,21 +310,51 @@
             btn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> Login`;
 
             if (!usersDb) {
-                swal({ title: "कनेक्शन त्रुटि!", text: "गूगल शीट से डेटा प्राप्त नहीं हो सका। कृपया इंटरनेट जांचें।", type: "error", confirmButtonColor: "#dc2626" });
+                swal({
+                    title: "कनेक्शन त्रुटि!",
+                    text: "गूगल शीट से डेटा प्राप्त नहीं हो सका। कृपया अपना इंटरनेट कनेक्शन जांचें।",
+                    type: "error",
+                    confirmButtonColor: "#dc2626",
+                    confirmButtonText: "ठीक है"
+                });
                 return;
             }
 
             if (usersDb[uid]) {
                 let userRecord = usersDb[uid];
+
                 if (userRecord.pass && String(userRecord.pass).trim() === upass) {
                     localStorage.setItem('active_exam_user', JSON.stringify(userRecord));
-                    swal({ title: "Successfully Login!", text: "सफलतापूर्वक लॉगिन हो गया है।", type: "success", timer: 1000, showConfirmButton: false });
-                    setTimeout(() => { window.location.href = "exam.html"; }, 1000);
+
+                    swal({
+                        title: "Successfully Login!",
+                        text: "सफलतापूर्वक लॉगिन हो गया है।",
+                        type: "success",
+                        timer: 1200,
+                        showConfirmButton: false
+                    });
+
+                    setTimeout(() => {
+                        window.location.href = "exam.html";
+                    }, 1200);
+
                 } else {
-                    swal({ title: "प्रवेश अस्वीकृत!", text: "गलत पासवर्ड! कृपया सही पासवर्ड दर्ज करें।", type: "error", confirmButtonColor: "#dc2626" });
+                    swal({
+                        title: "प्रवेश अस्वीकृत!",
+                        text: "गलत पासवर्ड! कृपया सही पासवर्ड दर्ज करें।",
+                        type: "error",
+                        confirmButtonColor: "#dc2626",
+                        confirmButtonText: "पुनः प्रयास करें"
+                    });
                 }
             } else {
-                swal({ title: "यूजर नहीं मिला!", text: "यह यूजर नेम डेटाबेस में दर्ज नहीं है।", type: "error", confirmButtonColor: "#dc2626" });
+                swal({
+                    title: "यूजर नहीं मिला!",
+                    text: "यह यूजर नेम गूगल शीट डेटाबेस में दर्ज नहीं है।",
+                    type: "error",
+                    confirmButtonColor: "#dc2626",
+                    confirmButtonText: "ठीक है"
+                });
             }
         }
     </script>
