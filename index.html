@@ -357,6 +357,16 @@
                 });
             }
         }
+        // login.html के script में जोड़ें ताकि परीक्षा के प्रश्न पहले ही बैकग्राउंड में लोड हो जाएं
+window.addEventListener('DOMContentLoaded', () => {
+    fetch("https://script.google.com/macros/s/AKfycbyDzS3NqtINc16q-QlPfYiMtzUZn29QhD8KuuAZmLo5eRpDfas7x93B8rYHAJf-j7fs/exec")
+        .then(res => res.json())
+        .then(data => {
+            if (data.questions) {
+                sessionStorage.setItem('cached_cctns_questions', JSON.stringify(data.questions));
+            }
+        }).catch(e => console.log("Prefetch background error"));
+});
     </script>
 </body>
 </html>
